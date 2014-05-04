@@ -24,7 +24,10 @@ int green_led = 2;
 
 int led_array[] = { 
   green_led, yellow_led, orange_led, red_led }; 
-int array_length = 4; 
+int array_length = 4;
+
+const int button = 8; 
+int buttonState = 0;         // variable for reading the pushbutton status
 
 WiFlyClient client("airnow.gov", 80);
 TextFinder finder( client );
@@ -34,6 +37,9 @@ void setup() {
   for ( int i = 0; i < array_length; i++ ) {
     pinMode( led_array[ i ], OUTPUT );
   } 
+  
+  // initialize the pushbutton pin as an input:
+  pinMode( button, INPUT ); 
 
   Serial.begin(115200);
   Serial.println("WebClient example at 38400 baud.");
@@ -80,6 +86,21 @@ boolean currentLineIsBlank = false;
 
 
 void loop() {
+  
+    // read the state of the pushbutton value:
+  buttonState = digitalRead( button );
+
+  // check if the pushbutton is pressed.
+  // if it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {     
+    // turn LED on:    
+    digitalWrite( green_led, HIGH);  
+  } 
+  else {
+    // turn LED off:
+    digitalWrite( green_led, LOW); 
+  }
+  
 
   if (client.available()) {
     int index = 0; 
