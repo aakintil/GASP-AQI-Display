@@ -1,21 +1,39 @@
 // (Based on Ethernet's WebClient Example)
 
+// Necessary Libraries
 #include <SPI.h>
 #include <WiFly.h>
 #include <TextFinder.h>
 #include "Credentials.h"
 
+// Variables
 String myStr;
 String readString, readString1; 
 int x=0;
-char lf=10;
+//char lf=10;
 boolean reading = false;
 String result; 
+long array [] = {
+};
+
+// LEDS
+int red_led = 5; 
+int orange_led = 4; 
+int yellow_led = 3; 
+int green_led = 2;
+
+int led_array[] = { 
+  green_led, yellow_led, orange_led, red_led }; 
+int array_length = 4; 
 
 WiFlyClient client("airnow.gov", 80);
 TextFinder finder( client );
 
 void setup() {
+  //  initialize leds
+  for ( int i = 0; i < array_length; i++ ) {
+    pinMode( led_array[ i ], OUTPUT );
+  } 
 
   Serial.begin(115200);
   Serial.println("WebClient example at 38400 baud.");
@@ -37,7 +55,7 @@ void setup() {
     Serial.println("connected");
     client.println("GET /?action=airnow.local_city&zipcode=15232 HTTP/1.0"); 
 
-//  TEST AND SEE IF ANY OF THESE ARE NECESSARY
+    //  TEST AND SEE IF ANY OF THESE ARE NECESSARY
     client.println("Accept:text/html,application/xhtml+xml,application/xml");
     //   ;q=0.9,image/webp,*/*;q=0.8"); 
     client.println("Accept-Encoding:gzip,deflate,sdch"); 
@@ -59,22 +77,31 @@ void setup() {
 
 int count = 0;
 boolean currentLineIsBlank = false;
+
+
 void loop() {
 
   if (client.available()) {
-    
+    int index = 0; 
     char c = client.read();
-//    Serial.print(c); 
-//    Serial.println("parsing the html data: "); 
-    
+    //    Serial.print(c);  
+    //    Serial.println("parsing the html data: "); 
+
     if (client.connected()) {
       Serial.println("connected..."); 
-    finder.find("AQDataSectionTitle"); 
-    finder.find("TblInvisible"); 
-    finder.findUntil("background=", "HealthMessage"); 
-    long value = finder.getValue(); 
-    Serial.println("============ FOUND ============"); 
-    Serial.println(value); 
+      finder.find("AQDataSectionTitle"); 
+      finder.find("TblInvisible"); 
+
+      //      finder.findUntil("background=", "HealthMessage"); 
+      finder.findUntil("center", "AQILegendText"); 
+      long value = finder.getValue(); 
+      light_appropriate_led( 120 );
+      //      Serial.println("============ FOUND ============"); 
+      Serial.println( value );  
+      client.stop();
+      //      client.println("Connection: close");
+      //      client.println();
+      //      if (value)   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
     }
   }
 
@@ -92,15 +119,43 @@ void loop() {
     //    Serial.print("DPD sec: ");
     //    Serial.println(readString1);
     //    Serial.println("done");
-
     for(;;);
-
   }
-
- 
-
 }
 
+
+
+void light_appropriate_led( long value ) {
+  int val = int( value );
+  Serial.println("=============="); 
+  Serial.println("method called. the AQI is: " + val ); 
+
+  delay(1000);
+
+  if ( val ) {
+
+    if ( val >= 0 && val <= 50 ) {
+      digitalWrite( green_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      //      turn on green light for x amount
+    }
+    else if ( val >= 51 && val <= 100 ) {
+      digitalWrite( yellow_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      //    turn on the yellow light for x amount of time
+    }
+    else if ( val >= 101 && val <= 150 ) {
+      digitalWrite( orange_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      //   turn on the orange light for x amount of time 
+    }
+    else {
+      digitalWrite( red_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      // turn on the red light for x amount of time
+    }
+
+  }
+  else {
+    //    couldn't get a value, so just turn on the green light for x amount
+  }
+}
 
 
 
