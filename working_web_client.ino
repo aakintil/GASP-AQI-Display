@@ -36,6 +36,13 @@ int prev = 1;
 WiFlyClient client("airnow.gov", 80);
 TextFinder finder( client );
 
+
+int count = 0;
+boolean currentLineIsBlank = false;
+
+int c = 0; 
+
+
 void setup() {
   //  initialize leds
   for ( int i = 0; i < array_length; i++ ) {
@@ -45,10 +52,6 @@ void setup() {
   pinMode( button, INPUT);
   digitalWrite( button, HIGH);
   buttonstate = LOW; 
-
-  // initialize the pushbutton pin as an input:
-  pinMode( button, INPUT ); 
-
 
   Serial.begin(115200);
   Serial.println("WebClient example at 38400 baud.");
@@ -62,7 +65,7 @@ void setup() {
     }
   }  
 
-//  WiFly.configure(WIFLY_BAUD, 38400);
+  //  WiFly.configure(WIFLY_BAUD, 38400);
 
   Serial.println("connecting...");
 
@@ -88,69 +91,74 @@ void setup() {
     Serial.println("connection failed");
   }
 
+//  Serial.flush ();   // wait for send buffer to empty
+//  delay (2);    // let last character be sent
+//  Serial.end ();      // close serial
+//
+//  Serial.begin(9600);
+
 }
 
-int count = 0;
-boolean currentLineIsBlank = false;
+int aqi = 0; 
+boolean found_aqi = false; 
 
-int c = 0; 
 void loop() {
   // read the state of the pushbutton value:
-  buttonstate = digitalRead( button );
+  buttonstate = digitalRead( button ); 
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
+  Serial.print("button state... "); 
+  Serial.println( buttonstate ); 
 
-  if (client.available()) {
-    int index = 0; 
-    char c = client.read();
-    //    Serial.print(c);  
-    //    Serial.println("parsing the html data: "); 
+  if ( found_aqi == false ) {
+    if (client.available()) {
+      int index = 0; 
+      char c = client.read();
+      //    Serial.print(c);  
+      //    Serial.println("parsing the html data: "); 
 
-    if (client.connected()) {
-      Serial.println("connected..."); 
-      finder.find("AQDataSectionTitle"); 
-      finder.find("TblInvisible"); 
+      if (client.connected()) {
+        Serial.println("connected..."); 
+        finder.find("AQDataSectionTitle"); 
+        finder.find("TblInvisible"); 
+        finder.findUntil("center", "AQILegendText"); 
+        long value = finder.getValue(); 
+        aqi = light_appropriate_led( value );
+        found_aqi = true; 
+        //        client.stop();
+        //      client.println("Connection: close");
+        //      client.println();
+        //      if (value)   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+      }
+    }
 
-      //      finder.findUntil("background=", "HealthMessage"); 
-      finder.findUntil("center", "AQILegendText"); 
-      long value = finder.getValue(); 
-      light_appropriate_led( 120 );
-      //      Serial.println("============ FOUND ============"); 
-      Serial.println( value );  
+    if (!client.connected()) {
       client.stop();
-      //      client.println("Connection: close");
-      //      client.println();
-      //      if (value)   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+      //    Serial.println("Current data row:" );
+      //    Serial.print(readString);
+      //    Serial.println();
+      //    readString1 = (readString.substring(41,43));
+      //    Serial.println();
+      //    Serial.print("DPD sec: ");
+      //    Serial.println(readString1);
+      Serial.println("done");
+      for(;;);
     }
   }
-
-
-
-
-  if (!client.connected()) {
-    client.stop();
-    //    Serial.println("Current data row:" );
-    //    Serial.print(readString);
-    //    Serial.println();
-    //    readString1 = (readString.substring(41,43));
-    //    Serial.println();
-    //    Serial.print("DPD sec: ");
-    //    Serial.println(readString1);
-    //    Serial.println("done");
-    for(;;);
-  }
-
-
-
-  if ( buttonstate != prev ) {
-    light_show();   
+  if ( buttonstate != prev && found_aqi ) {
+    light_show( aqi );   
   }
   prev = buttonstate;
+
+
 }
 
+
+
 // take in a parameter: the index of the array to light
-void light_show() {
-  Serial.println( c ); 
+void light_show( int index ) {
+
+  //  Serial.println( c ); 
   while ( c < 5 ) {
     for ( int i = 0; i < array_length; i++) {
       digitalWrite( led_array[i], HIGH);
@@ -160,44 +168,47 @@ void light_show() {
     c++; 
   }
 
-  digitalWrite(green_led, HIGH);
+  digitalWrite( led_array[ index ] , HIGH);
   c = 0; 
   delay(10000);
-  digitalWrite(green_led, LOW);
+  digitalWrite( led_array[ index ], LOW);
 }
 
 
 // make this return the index array for the correct light
-void light_appropriate_led( long value ) {
+int light_appropriate_led( long value ) {
   int val = int( value );
-  Serial.println("=============="); 
-  Serial.println("method called. the AQI is: " + val ); 
+  //  Serial.println("=============="); 
+  //  Serial.println("method called. the AQI is: " + val ); 
 
-  delay(1000);
+  //  delay(1000);
 
   if ( val ) {
 
     if ( val >= 0 && val <= 50 ) {
-      digitalWrite( green_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      return 0; 
+      //      digitalWrite( green_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //      turn on green light for x amount
     }
     else if ( val >= 51 && val <= 100 ) {
-      digitalWrite( yellow_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      return 1; 
+      //      digitalWrite( yellow_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //    turn on the yellow light for x amount of time
     }
     else if ( val >= 101 && val <= 150 ) {
-      digitalWrite( orange_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      return 2; 
+      //      digitalWrite( orange_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //   turn on the orange light for x amount of time 
     }
     else {
-      digitalWrite( red_led, HIGH );   // turn the LED on (HIGH is the voltage level)
+      return 3; 
+      //      digitalWrite( red_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       // turn on the red light for x amount of time
     }
 
   }
   else {
     //    couldn't get a value, so just turn on the green light for x amount
+    return 0; 
   }
 }
-
-
