@@ -90,13 +90,6 @@ void setup() {
   else {
     Serial.println("connection failed");
   }
-
-//  Serial.flush ();   // wait for send buffer to empty
-//  delay (2);    // let last character be sent
-//  Serial.end ();      // close serial
-//
-//  Serial.begin(9600);
-
 }
 
 int aqi = 0; 
@@ -107,8 +100,8 @@ void loop() {
   buttonstate = digitalRead( button ); 
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
-  Serial.print("button state... "); 
-  Serial.println( buttonstate ); 
+//  Serial.print("button state... "); 
+//  Serial.println( buttonstate ); 
 
   if ( found_aqi == false ) {
     if (client.available()) {
@@ -134,13 +127,6 @@ void loop() {
 
     if (!client.connected()) {
       client.stop();
-      //    Serial.println("Current data row:" );
-      //    Serial.print(readString);
-      //    Serial.println();
-      //    readString1 = (readString.substring(41,43));
-      //    Serial.println();
-      //    Serial.print("DPD sec: ");
-      //    Serial.println(readString1);
       Serial.println("done");
       for(;;);
     }
@@ -178,31 +164,23 @@ void light_show( int index ) {
 // make this return the index array for the correct light
 int light_appropriate_led( long value ) {
   int val = int( value );
-  //  Serial.println("=============="); 
-  //  Serial.println("method called. the AQI is: " + val ); 
-
-  //  delay(1000);
 
   if ( val ) {
 
     if ( val >= 0 && val <= 50 ) {
       return 0; 
-      //      digitalWrite( green_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //      turn on green light for x amount
     }
     else if ( val >= 51 && val <= 100 ) {
       return 1; 
-      //      digitalWrite( yellow_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //    turn on the yellow light for x amount of time
     }
     else if ( val >= 101 && val <= 150 ) {
       return 2; 
-      //      digitalWrite( orange_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       //   turn on the orange light for x amount of time 
     }
     else {
       return 3; 
-      //      digitalWrite( red_led, HIGH );   // turn the LED on (HIGH is the voltage level)
       // turn on the red light for x amount of time
     }
 
