@@ -26,8 +26,12 @@ int led_array[] = {
   green_led, yellow_led, orange_led, red_led }; 
 int array_length = 4;
 
+
+// BUTTON VARIABLES
 const int button = 8; 
 int buttonState = 0;         // variable for reading the pushbutton status
+
+int prev = 1;
 
 WiFlyClient client("airnow.gov", 80);
 TextFinder finder( client );
@@ -37,6 +41,10 @@ void setup() {
   for ( int i = 0; i < array_length; i++ ) {
     pinMode( led_array[ i ], OUTPUT );
   } 
+  // initialize button
+  pinMode(buttonPin, INPUT);
+  digitalWrite(buttonPin, HIGH);
+  buttonstate = LOW; 
 
   // initialize the pushbutton pin as an input:
   pinMode( button, INPUT ); 
@@ -86,7 +94,7 @@ boolean currentLineIsBlank = false;
 
 int c = 0; 
 void loop() {
- digitalWrite( green_led, HIGH);  
+  digitalWrite( green_led, HIGH);  
   // read the state of the pushbutton value:
   buttonState = digitalRead( button );
   Serial.print("button state  ");
@@ -110,12 +118,12 @@ void loop() {
     //        break; 
     //      } 
     //    }
-//    digitalWrite( green_led, HIGH);  
+    //    digitalWrite( green_led, HIGH);  
   } 
   else {
     // turn LED off:
     for ( int i = 0; i < array_length; i++) {
-//      digitalWrite( led_array[i], LOW);
+      //      digitalWrite( led_array[i], LOW);
     } 
   }
 
@@ -160,10 +168,35 @@ void loop() {
   //    //    Serial.println("done");
   //    for(;;);
   //  }
+  
+  int 
+
+  if ( buttonstate != prev ) {
+    light_show();   
+  }
+  prev = buttonstate;
+}
+
+// take in a parameter: the index of the array to light
+void light_show() {
+  Serial.println( c ); 
+  while ( c < 5 ) {
+    for ( int i = 0; i < array_length; i++) {
+      digitalWrite( led_array[i], HIGH);
+      delay( 300 ) ; 
+      digitalWrite( led_array[i], LOW);
+    }
+    c++; 
+  }
+
+  digitalWrite(green_led, HIGH);
+  c = 0; 
+  delay(10000);
+  digitalWrite(green_led, LOW);
 }
 
 
-
+// make this return the index array for the correct light
 void light_appropriate_led( long value ) {
   int val = int( value );
   Serial.println("=============="); 
@@ -195,16 +228,5 @@ void light_appropriate_led( long value ) {
     //    couldn't get a value, so just turn on the green light for x amount
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
